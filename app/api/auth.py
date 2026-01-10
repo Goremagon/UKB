@@ -17,6 +17,7 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    role: str
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -26,4 +27,4 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     token = create_access_token(user.username)
-    return TokenResponse(access_token=token)
+    return TokenResponse(access_token=token, role=user.role)
