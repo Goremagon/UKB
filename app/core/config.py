@@ -10,6 +10,7 @@ DB_PATH = DB_DIR / "ukb.sqlite3"
 SECRET_KEY = "change-me-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
+BACKUP_SCHEMA_VERSION = 1
 
 
 def ensure_directories() -> None:

@@ -1,9 +1,11 @@
 from datetime import date
+import csv
+import io
 from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -83,6 +85,7 @@ def upload_document(
 def search_documents_endpoint(
     q: str = Query(..., min_length=1),
     doc_type: Optional[str] = Query(None),
+    department: Optional[str] = Query(None),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     db: Session = Depends(get_db),
@@ -91,6 +94,8 @@ def search_documents_endpoint(
     query = db.query(Document)
     if doc_type:
         query = query.filter(Document.doc_type == doc_type)
+    if department:
+        query = query.filter(Document.department == department)
     if start_date:
         query = query.filter(Document.date_published >= parse_date(start_date))
     if end_date:
@@ -138,6 +143,60 @@ def preview_document(
     db.add(AuditLog(user_id=current_user.id, action="view", target_id=document.id))
     db.commit()
     return FileResponse(path=file_path, media_type="application/pdf", filename=document.filename)
+
+
+@router.get("/export")
+def export_search_results(
+    q: str = Query(..., min_length=1),
+    doc_type: Optional[str] = Query(None),
+    department: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query = db.query(Document)
+    if doc_type:
+        query = query.filter(Document.doc_type == doc_type)
+    if department:
+        query = query.filter(Document.department == department)
+    if start_date:
+        query = query.filter(Document.date_published >= parse_date(start_date))
+    if end_date:
+        query = query.filter(Document.date_published <= parse_date(end_date))
+    if current_user.role != "Admin":
+        query = query.filter(Document.is_sensitive.is_(False))
+
+    documents = {doc.id: doc for doc in query.all()}
+    allowed_ids = list(documents.keys())
+    if not allowed_ids:
+        return StreamingResponse(iter(()), media_type="text/csv")
+
+    results = search_documents(q, allowed_ids=allowed_ids, limit=1000)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Filename", "Date", "Department", "Tags"])
+    for item in results:
+        doc_id = int(item["doc_id"])
+        document = documents.get(doc_id)
+        if not document:
+            continue
+        tags = ",".join(document.tags) if isinstance(document.tags, list) else (document.tags or "")
+        writer.writerow(
+            [
+                document.filename,
+                document.date_published.isoformat() if document.date_published else "",
+                document.department or "",
+                tags,
+            ]
+        )
+
+    db.add(AuditLog(user_id=current_user.id, action="export", target_id=None))
+    db.commit()
+
+    response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=ukb_search_export.csv"
+    return response
 
 
 @router.post("/sync")
