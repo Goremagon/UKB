@@ -1,10 +1,16 @@
+import platform
 import sys
 import threading
 import webbrowser
 
 
 def check_dependencies() -> None:
+    if sys.version_info < (3, 14):
+        print("Python 3.14+ is required. Current version:", sys.version)
+        sys.exit(1)
+
     missing = []
+    arch = platform.machine().lower()
     try:
         import fastapi  # noqa: F401
     except ImportError:
@@ -21,14 +27,12 @@ def check_dependencies() -> None:
         import fitz  # noqa: F401
     except ImportError:
         missing.append("PyMuPDF")
-    try:
-        import whoosh  # noqa: F401
-    except ImportError:
-        missing.append("whoosh")
 
     if missing:
+        arch_hint = "x64" if "64" in arch or "amd" in arch else arch
         print("Missing dependencies:", ", ".join(missing))
         print("Install requirements with: pip install -r requirements.txt")
+        print(f"If you are on {arch_hint}, ensure wheels are available for Python {sys.version_info.major}.{sys.version_info.minor}.")
         sys.exit(1)
 
 

@@ -22,14 +22,14 @@ def create_app() -> FastAPI:
     app.include_router(documents.router, prefix="/documents", tags=["documents"])
     app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
-    ui_dist = Path(__file__).resolve().parent / "ui" / "dist"
-    if ui_dist.exists():
-        app.mount("/", StaticFiles(directory=ui_dist, html=True), name="ui")
-
     @app.on_event("startup")
     def startup() -> None:
         init_db()
         ensure_index()
+
+    ui_dist = Path(__file__).resolve().parent / "ui" / "dist"
+    if ui_dist.exists():
+        app.mount("/", StaticFiles(directory=ui_dist, html=True), name="ui")
 
     return app
 
