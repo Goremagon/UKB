@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, documents
+from app.api import admin, auth, documents
 from app.core.database import init_db
 from app.core.search import ensure_index
 
@@ -17,6 +17,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(auth.router, prefix="/auth", tags=["auth"])
     app.include_router(documents.router, prefix="/documents", tags=["documents"])
+    app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
     @app.on_event("startup")
     def startup() -> None:

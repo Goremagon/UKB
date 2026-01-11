@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Date, DateTime, Integer, String
+from sqlalchemy import Boolean, Column, Date, DateTime, Integer, String
 from sqlalchemy.types import JSON
 
 from app.models.base import Base
@@ -18,3 +18,4 @@ class Document(Base):
     date_published = Column(Date, nullable=True)
     upload_date = Column(DateTime, default=datetime.utcnow, nullable=False)
     tags = Column(JSON, nullable=True)
+    is_sensitive = Column(Boolean, default=False, nullable=False)

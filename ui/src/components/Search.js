@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Folder,
   LogOut,
+  Lock,
   Search as SearchIcon,
   Settings,
   Shield,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 
 import api from "../lib/api";
+import AdminSettings from "./AdminSettings";
 import Upload from "./Upload";
 
 const docTypes = ["CBA", "Grievance", "Policy", "Arbitration", "Other"];
@@ -19,6 +21,7 @@ export default function Search({ role, onLogout }) {
   const [results, setResults] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [showAdminSettings, setShowAdminSettings] = useState(false);
   const [error, setError] = useState("");
   const [docTypeFilters, setDocTypeFilters] = useState({});
   const [department, setDepartment] = useState("All");
@@ -99,7 +102,10 @@ export default function Search({ role, onLogout }) {
                   <UploadCloud className="h-4 w-4" />
                   Upload
                 </button>
-                <button className="flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500">
+                <button
+                  onClick={() => setShowAdminSettings(true)}
+                  className="flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+                >
                   <Settings className="h-4 w-4" />
                   Admin Settings
                 </button>
@@ -228,7 +234,15 @@ export default function Search({ role, onLogout }) {
                         : "border-slate-800 bg-slate-950/40 hover:border-slate-600"
                     }`}
                   >
-                    <h3 className="text-sm font-semibold text-slate-100">{item.title}</h3>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-semibold text-slate-100">{item.title}</h3>
+                      {isAdmin && item.is_sensitive ? (
+                        <span className="flex items-center gap-1 text-xs text-amber-300">
+                          <Lock className="h-3.5 w-3.5" />
+                          Sensitive
+                        </span>
+                      ) : null}
+                    </div>
                     <p
                       className="mt-2 text-xs text-slate-400"
                       dangerouslySetInnerHTML={{ __html: highlight(item.highlight) }}
@@ -292,6 +306,9 @@ export default function Search({ role, onLogout }) {
           onClose={() => setShowUpload(false)}
           onSuccess={() => setShowUpload(false)}
         />
+      )}
+      {showAdminSettings && (
+        <AdminSettings onClose={() => setShowAdminSettings(false)} />
       )}
     </div>
   );

@@ -12,7 +12,8 @@ export default function Upload({ onClose, onSuccess }) {
     doc_type: "CBA",
     department: "Operations",
     date_published: "",
-    tags: ""
+    tags: "",
+    is_sensitive: false
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -136,6 +137,17 @@ export default function Upload({ onClose, onSuccess }) {
                 }
                 className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200"
               />
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={metadata.is_sensitive}
+                onChange={(event) =>
+                  setMetadata((prev) => ({ ...prev, is_sensitive: event.target.checked }))
+                }
+                className="h-4 w-4 rounded border-slate-600 bg-slate-950 text-union-500"
+              />
+              Mark as Sensitive
             </label>
           </div>
 

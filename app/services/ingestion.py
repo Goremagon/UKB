@@ -33,6 +33,7 @@ def ingest_file(
         department=metadata.get("department"),
         date_published=metadata.get("date_published"),
         tags=metadata.get("tags"),
+        is_sensitive=metadata.get("is_sensitive", False),
     )
     db.add(document)
     db.commit()

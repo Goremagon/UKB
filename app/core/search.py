@@ -2,7 +2,8 @@ from whoosh import index
 from whoosh.analysis import StemmingAnalyzer
 from whoosh.fields import ID, KEYWORD, TEXT, Schema
 from whoosh.highlight import ContextFragmenter
-from whoosh.qparser import MultifieldParser
+from whoosh.qparser import MultifieldParser, OrGroup
+from whoosh.query import Or, Term
 
 from app.core.config import INDEX_DIR, ensure_directories
 
@@ -32,14 +33,17 @@ def index_document(doc_id: str, title: str, content: str, tags: str) -> None:
     writer.commit()
 
 
-def search_documents(query: str, limit: int = 10):
+def search_documents(query: str, limit: int = 10, allowed_ids: list[int] | None = None):
     ix = get_index()
-    parser = MultifieldParser(["title", "content", "tags"], schema=SCHEMA)
+    parser = MultifieldParser(["title", "content", "tags"], schema=SCHEMA, group=OrGroup)
     parsed = parser.parse(query)
     results_payload = []
+    filter_query = None
+    if allowed_ids:
+        filter_query = Or([Term("doc_id", str(doc_id)) for doc_id in allowed_ids])
 
     with ix.searcher() as searcher:
-        results = searcher.search(parsed, limit=limit)
+        results = searcher.search(parsed, limit=limit, filter=filter_query)
         results.fragmenter = ContextFragmenter(maxchars=200, surround=50)
         for hit in results:
             results_payload.append(
