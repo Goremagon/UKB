@@ -43,15 +43,23 @@ def seed_users(db: Session) -> None:
     db.commit()
 
 
-def generate_text(title: str) -> str:
+def generate_text(title: str, unique_id: str, variant: int) -> str:
+    specific_entries = {
+        1: "Article 9: Seniority, Bumping Rights, and Recall Procedures.",
+        2: "Grievance #2024-01: Denial of Overtime for Night Shift Differential.",
+        3: "Health and Welfare: Kaiser vs. Blue Cross coverage tiers.",
+        4: "Arbitration Ruling on Just Cause for termination regarding safety violations.",
+    }
+    seed_line = specific_entries.get(variant, f"Local 2024 Update: {title}")
     paragraphs = [
-        f"Union Knowledge Base Seed Document: {title}",
-        "This document contains detailed union guidance, contract language, and operational notes.",
-        "Stewards should reference this section during representation meetings and grievance review.",
-        "Ensure compliance with safety practices, seniority rules, and contractual wage scales.",
-        "Maintain clear documentation for all cases, including witness statements and timelines.",
+        f"[{unique_id}] Union Knowledge Base Seed Document: {title}",
+        seed_line,
+        "This memorandum outlines bargaining history, shop-floor practices, and steward notes.",
+        "Key terms: seniority ladders, bumping rights, recall lists, grievance steps, and arbitration timelines.",
+        "Operational directives include overtime equalization, safety committee findings, and wage scale alignment.",
+        "Witness notes and remedy proposals are documented for case tracking and compliance follow-up.",
     ]
-    return "\n\n".join(paragraphs * 3)
+    return "\n\n".join(paragraphs)
 
 
 def create_pdf(file_path: Path, title: str, content: str) -> None:
@@ -91,7 +99,8 @@ def seed_documents(db: Session, output_dir: Path) -> None:
     for index, title in enumerate(titles):
         filename = f"seed_{index + 1:02d}.pdf"
         file_path = output_dir / filename
-        content = generate_text(title)
+        unique_id = f"UKB-TEST-{index + 1:02d}"
+        content = generate_text(title, unique_id, index + 1)
         create_pdf(file_path, title, content)
         metadata = {
             "doc_type": random.choice(DOC_TYPES),

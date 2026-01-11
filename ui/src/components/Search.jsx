@@ -36,6 +36,13 @@ export default function Search({ role, onLogout }) {
     () => Object.keys(docTypeFilters).filter((key) => docTypeFilters[key]),
     [docTypeFilters]
   );
+  const docTypeCounts = useMemo(() => {
+    return results.reduce((acc, item) => {
+      const key = item.doc_type || "Other";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+  }, [results]);
 
   useEffect(() => {
     if (!query) {
@@ -179,7 +186,7 @@ export default function Search({ role, onLogout }) {
                           }))
                         }
                       />
-                      {type}
+                      {type} ({docTypeCounts[type] || 0})
                     </label>
                   ))}
                 </div>

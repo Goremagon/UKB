@@ -25,6 +25,7 @@ router = APIRouter()
 class SearchResponse(BaseModel):
     doc_id: str
     title: str
+    doc_type: str
     tags: str
     highlight: str
     is_sensitive: bool
@@ -117,7 +118,13 @@ def search_documents_endpoint(
         document = documents.get(doc_id)
         if not document:
             continue
-        payload.append({**item, "is_sensitive": document.is_sensitive})
+        payload.append(
+            {
+                **item,
+                "doc_type": document.doc_type,
+                "is_sensitive": document.is_sensitive,
+            }
+        )
 
     db.add(AuditLog(user_id=current_user.id, action="search", target_id=None))
     db.commit()

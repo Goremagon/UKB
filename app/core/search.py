@@ -116,20 +116,38 @@ def _apply_boolean_filter(documents: Iterable[IndexedDocument], query: str) -> l
 def _highlight_snippet(content: str, terms: list[str]) -> str:
     if not content:
         return ""
+    if not terms:
+        return content[:200]
+
     lower = content.lower()
+    matches = []
     for term in terms:
-        idx = lower.find(term.lower())
-        if idx != -1:
-            start = max(idx - 50, 0)
-            end = min(idx + 150, len(content))
-            snippet = content[start:end]
-            return re.sub(
-                re.escape(term),
-                lambda match: f"<strong>{match.group(0)}</strong>",
-                snippet,
-                flags=re.IGNORECASE,
-            )
-    return content[:200]
+        for match in re.finditer(re.escape(term.lower()), lower):
+            matches.append(match.start())
+    if not matches:
+        return content[:200]
+
+    best_start = 0
+    best_score = -1
+    for position in matches:
+        window_start = max(position - 75, 0)
+        window_end = min(position + 175, len(content))
+        window_text = lower[window_start:window_end]
+        score = sum(window_text.count(term.lower()) for term in terms)
+        if score > best_score:
+            best_score = score
+            best_start = window_start
+
+    snippet = content[best_start : min(best_start + 250, len(content))]
+    highlighted = snippet
+    for term in sorted(set(terms), key=len, reverse=True):
+        highlighted = re.sub(
+            re.escape(term),
+            lambda match: f"<strong>{match.group(0)}</strong>",
+            highlighted,
+            flags=re.IGNORECASE,
+        )
+    return highlighted
 
 
 def search_documents(query: str, limit: int = 10, allowed_ids: list[int] | None = None):
