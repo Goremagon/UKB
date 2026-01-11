@@ -43,21 +43,32 @@ def seed_users(db: Session) -> None:
     db.commit()
 
 
-def generate_text(title: str, unique_id: str, variant: int) -> str:
-    specific_entries = {
-        1: "Article 9: Seniority, Bumping Rights, and Recall Procedures.",
-        2: "Grievance #2024-01: Denial of Overtime for Night Shift Differential.",
-        3: "Health and Welfare: Kaiser vs. Blue Cross coverage tiers.",
-        4: "Arbitration Ruling on Just Cause for termination regarding safety violations.",
-    }
-    seed_line = specific_entries.get(variant, f"Local 2024 Update: {title}")
+UNION_CLAUSES = {
+    "Seniority Bidding": "Seniority Bidding rules govern shift selection and displacement order.",
+    "Just Cause Termination": "Just Cause Termination standards require documented progressive discipline.",
+    "Health & Welfare Tiers": "Health & Welfare Tiers outline Kaiser vs. Blue Cross coverage tiers.",
+    "Grievance Timelines": "Grievance Timelines specify step meetings within 5 business days.",
+    "Overtime Equalization": "Overtime Equalization ensures fair distribution across classifications.",
+    "Safety Committees": "Safety Committees must review incident reports within 48 hours.",
+    "Wage Progression": "Wage Progression schedules define annual step increases.",
+    "Bumping Rights": "Bumping Rights allow senior employees to displace junior roles.",
+    "Recall Procedures": "Recall Procedures require written notice by certified mail.",
+    "Training Standards": "Training Standards mandate certification before operating equipment.",
+    "Shift Differential": "Shift Differential premiums apply to night shift hours.",
+    "Attendance Policy": "Attendance Policy outlines point thresholds and corrective action.",
+}
+
+
+def generate_text(title: str, unique_id: str) -> str:
+    clause_keys = random.sample(list(UNION_CLAUSES.keys()), k=4)
+    clause_lines = [UNION_CLAUSES[key] for key in clause_keys]
     paragraphs = [
         f"[{unique_id}] Union Knowledge Base Seed Document: {title}",
-        seed_line,
-        "This memorandum outlines bargaining history, shop-floor practices, and steward notes.",
-        "Key terms: seniority ladders, bumping rights, recall lists, grievance steps, and arbitration timelines.",
-        "Operational directives include overtime equalization, safety committee findings, and wage scale alignment.",
-        "Witness notes and remedy proposals are documented for case tracking and compliance follow-up.",
+        f"Control ID: [{unique_id}]",
+        "This memorandum provides high-fidelity labor guidance for stewards and bargaining teams.",
+        "Core clauses:",
+        *clause_lines,
+        "Notes include bargaining history, steward interviews, and compliance checkpoints.",
     ]
     return "\n\n".join(paragraphs)
 
@@ -99,8 +110,8 @@ def seed_documents(db: Session, output_dir: Path) -> None:
     for index, title in enumerate(titles):
         filename = f"seed_{index + 1:02d}.pdf"
         file_path = output_dir / filename
-        unique_id = f"UKB-TEST-{index + 1:02d}"
-        content = generate_text(title, unique_id, index + 1)
+        unique_id = f"CBA-2026-{index + 1:02d}"
+        content = generate_text(title, unique_id)
         create_pdf(file_path, title, content)
         metadata = {
             "doc_type": random.choice(DOC_TYPES),

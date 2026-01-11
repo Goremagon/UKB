@@ -7,6 +7,7 @@ from pathlib import Path
 from app.api import admin, auth, documents
 from app.core.database import init_db
 from app.core.search import ensure_index
+from app.services.watcher import start_watch
 
 
 def create_app() -> FastAPI:
@@ -26,6 +27,7 @@ def create_app() -> FastAPI:
     def startup() -> None:
         init_db()
         ensure_index()
+        start_watch()
 
     ui_dist = Path(__file__).resolve().parent / "ui" / "dist"
     if ui_dist.exists():

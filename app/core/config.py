@@ -5,6 +5,7 @@ DATA_DIR = BASE_DIR / "data"
 DB_DIR = DATA_DIR / "db"
 INDEX_DIR = DATA_DIR / "index"
 STORAGE_DIR = BASE_DIR / "storage"
+WATCH_DIR = BASE_DIR / "watch"
 
 DB_PATH = DB_DIR / "ukb.sqlite3"
 SECRET_KEY = "change-me-in-production"
@@ -17,3 +18,4 @@ def ensure_directories() -> None:
     DB_DIR.mkdir(parents=True, exist_ok=True)
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
     STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+    WATCH_DIR.mkdir(parents=True, exist_ok=True)
