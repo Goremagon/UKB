@@ -7,7 +7,8 @@ const docTypes = ["CBA", "Grievance", "Policy", "Arbitration", "Other"];
 const departments = ["Operations", "Safety", "HR", "Benefits", "Legal"];
 
 export default function Upload({ onClose, onSuccess }) {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [queue, setQueue] = useState([]);
   const [metadata, setMetadata] = useState({
     doc_type: "CBA",
     department: "Operations",
@@ -20,29 +21,40 @@ export default function Upload({ onClose, onSuccess }) {
 
   const handleDrop = (event) => {
     event.preventDefault();
-    const dropped = event.dataTransfer.files?.[0];
-    if (dropped) {
-      setFile(dropped);
+    const dropped = Array.from(event.dataTransfer.files || []);
+    if (dropped.length > 0) {
+      setFiles((prev) => [...prev, ...dropped]);
+      setQueue((prev) => [
+        ...prev,
+        ...dropped.map((file) => ({ name: file.name, status: "Pending" }))
+      ]);
     }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!file) {
-      setError("Please select a PDF to upload.");
+    if (files.length === 0) {
+      setError("Please select at least one PDF to upload.");
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await api.post("/documents/upload", formData, {
-        params: metadata
-      });
-      if (response.status === 200) {
-        onSuccess();
+      const nextQueue = [...queue];
+      for (let i = 0; i < files.length; i += 1) {
+        nextQueue[i] = { ...nextQueue[i], status: "Uploading" };
+        setQueue([...nextQueue]);
+        const formData = new FormData();
+        formData.append("file", files[i]);
+        const response = await api.post("/documents/upload", formData, {
+          params: metadata
+        });
+        if (response.status === 200) {
+          nextQueue[i] = { ...nextQueue[i], status: "Done" };
+          setQueue([...nextQueue]);
+        }
       }
+      onSuccess();
     } catch (err) {
       if (err.response?.status === 409) {
         setError("This document is already in the system.");
@@ -76,10 +88,22 @@ export default function Upload({ onClose, onSuccess }) {
             <input
               type="file"
               accept="application/pdf"
-              onChange={(event) => setFile(event.target.files?.[0] || null)}
+              multiple
+              onChange={(event) => {
+                const selected = Array.from(event.target.files || []);
+                if (selected.length > 0) {
+                  setFiles((prev) => [...prev, ...selected]);
+                  setQueue((prev) => [
+                    ...prev,
+                    ...selected.map((file) => ({ name: file.name, status: "Pending" }))
+                  ]);
+                }
+              }}
               className="mt-3 text-sm text-slate-400"
             />
-            {file ? <p className="mt-2 text-xs text-union-200">{file.name}</p> : null}
+            {files.length > 0 ? (
+              <p className="mt-2 text-xs text-union-200">{files.length} file(s) selected</p>
+            ) : null}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -151,6 +175,19 @@ export default function Upload({ onClose, onSuccess }) {
             </label>
           </div>
 
+          {queue.length > 0 ? (
+            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-xs text-slate-300">
+              <p className="text-xs uppercase text-slate-500">Upload Queue</p>
+              <ul className="mt-2 space-y-2">
+                {queue.map((item) => (
+                  <li key={item.name} className="flex items-center justify-between">
+                    <span>{item.name}</span>
+                    <span className="text-slate-400">{item.status}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
           <div className="flex items-center justify-end gap-3">
             <button

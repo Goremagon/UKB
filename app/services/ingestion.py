@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.search import index_document
 from app.models.audit_log import AuditLog
 from app.models.document import Document
+from app.services.analysis import summarize_document
 from app.services.pdf import extract_text
 from app.services.storage import compute_sha256, move_to_storage
 
@@ -45,6 +46,14 @@ def ingest_file(
         content=text,
         tags=",".join(document.tags) if isinstance(document.tags, list) else (document.tags or ""),
     )
+
+    try:
+        summary = summarize_document(text)
+        document.ai_summary = summary
+        db.add(document)
+        db.commit()
+    except Exception:
+        db.rollback()
 
     if user_id is not None:
         audit = AuditLog(user_id=user_id, action="upload", target_id=document.id)

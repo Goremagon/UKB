@@ -19,3 +19,4 @@ class Document(Base):
     upload_date = Column(DateTime, default=datetime.utcnow, nullable=False)
     tags = Column(JSON, nullable=True)
     is_sensitive = Column(Boolean, default=False, nullable=False)
+    ai_summary = Column(JSON, nullable=True)

@@ -7,6 +7,7 @@ pytesseract>=0.3.10
 pillow>=10.4.0
 rank-bm25>=0.2.2
 watchdog>=4.0.1
+ollama>=0.4.4
 pyjwt>=2.9.0
 python-multipart>=0.0.9
 reportlab>=4.2.2

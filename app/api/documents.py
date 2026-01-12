@@ -29,6 +29,7 @@ class SearchResponse(BaseModel):
     tags: str
     highlight: str
     is_sensitive: bool
+    ai_summary: Optional[List[str]] = None
 
 
 class BulkSyncRequest(BaseModel):
@@ -123,6 +124,7 @@ def search_documents_endpoint(
                 **item,
                 "doc_type": document.doc_type,
                 "is_sensitive": document.is_sensitive,
+                "ai_summary": document.ai_summary,
             }
         )
 

@@ -29,6 +29,7 @@ export default function Search({ role, onLogout }) {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [suggestions, setSuggestions] = useState([]);
   const [pageNumber, setPageNumber] = useState(1);
+  const [expandedSummaries, setExpandedSummaries] = useState({});
 
   const isAdmin = role === "Admin";
 
@@ -123,6 +124,10 @@ export default function Search({ role, onLogout }) {
   const previewUrl = selectedDoc
     ? `http://localhost:8000/documents/${selectedDoc.doc_id}/preview#page=${pageNumber}`
     : "";
+
+  const toggleSummary = (docId) => {
+    setExpandedSummaries((prev) => ({ ...prev, [docId]: !prev[docId] }));
+  };
 
   return (
     <div className="min-h-screen">
@@ -299,6 +304,23 @@ export default function Search({ role, onLogout }) {
                       className="mt-2 text-xs text-slate-400"
                       dangerouslySetInnerHTML={{ __html: highlight(item.highlight) }}
                     />
+                    {item.ai_summary && item.ai_summary.length > 0 ? (
+                      <div className="mt-3">
+                        <button
+                          onClick={() => toggleSummary(item.doc_id)}
+                          className="text-xs font-semibold text-union-200 hover:text-union-100"
+                        >
+                          {expandedSummaries[item.doc_id] ? "Hide AI Summary" : "View AI Summary"}
+                        </button>
+                        {expandedSummaries[item.doc_id] ? (
+                          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-300">
+                            {item.ai_summary.map((summaryItem) => (
+                              <li key={summaryItem}>{summaryItem}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    ) : null}
                     {item.tags ? (
                       <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-union-200">
                         {item.tags
